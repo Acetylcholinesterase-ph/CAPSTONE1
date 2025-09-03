@@ -30,7 +30,8 @@ This project implements an RFID-based recycling reward system designed to encour
 
 ## Software Requirements
 
-- Microcontroller Firmware (C/C++/Python)
+- Microcontroller Firmware (C++)
+- Cloud Database (PostgreSQL) 
 - Backend Server (optional; for data storage and admin dashboard)
 - Frontend (optional; for dashboard access)
 
