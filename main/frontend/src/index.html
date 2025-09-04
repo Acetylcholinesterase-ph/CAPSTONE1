@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eco Recycle System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="nav-brand">♻️ Eco Recycle</div>
+            <ul class="nav-links">
+                <li><a href="#" class="nav-link active" data-tab="dashboard">Dashboard</a></li>
+                <li><a href="#" class="nav-link" data-tab="student">Student Portal</a></li>
+                <li><a href="#" class="nav-link" data-tab="admin">Admin Monitoring</a></li>
+            </ul>
+        </nav>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="card">
+                <h1>Welcome to Eco Recycle System</h1>
+                <p>Track your recycling progress and redeem rewards</p>
+            </div>
+            
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h2>📊 Machine Status</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Total Bottles</h3>
+                            <p id="total-bottles">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Total Points</h3>
+                            <p id="total-points">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Active Users</h3>
+                            <p id="active-users">0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2>📈 Recent Activity</h2>
+                    <div id="recent-activity" class="activity-list">
+                        <div class="activity-item">No recent activity</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Portal Tab -->
+        <div id="student" class="tab-content">
+            <div class="card">
+                <h1>🎓 Student Redemption Portal</h1>
+                
+                <div class="search-box">
+                    <input type="text" id="studentId" placeholder="Enter Student ID" class="search-input">
+                    <button onclick="fetchStudentData()" class="search-btn">Search</button>
+                </div>
+                
+                <div id="student-info"></div>
+                <div id="redemption-codes"></div>
+            </div>
+        </div>
+
+        <!-- Admin Monitoring Tab -->
+        <div id="admin" class="tab-content">
+            <div class="card">
+                <h1>👨‍💼 Admin Monitoring Dashboard</h1>
+                
+                <div class="stats-grid" id="machine-stats">
+                    <!-- Machine stats will be populated here -->
+                </div>
+                
+                <h2 class="section-title">🚨 Suspicious Activities</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Time</th>
+                                <th>Bottles</th>
+                                <th>Status</th>
+                                <th>Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody id="suspicious-activities-body">
+                            <tr>
+                                <td colspan="5" class="no-data">No suspicious activities found</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+<!-- Add this before closing body tag -->
+<div id="login-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>🔐 Student Login</h2>
+            <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-username">Username:</label>
+                    <input type="text" id="login-username" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-pin">PIN Code:</label>
+                    <input type="password" id="login-pin" maxlength="4" required>
+                </div>
+                <button type="submit" class="btn-primary">Login</button>
+            </form>
+            <div id="login-message"></div>
+        </div>
+    </div>
+</div>
+<!-- Add user menu to navbar -->
+<div class="user-menu" style="display: none;">
+    <span id="user-greeting"></span>
+        <button onclick="logout()" class="btn-secondary">Logout</button>
+</div>
+<!-- Student Portal Tab -->
+<div id="student" class="tab-content">
+    <div class="student-portal">
+        <div class="card">
+            <h1>🎓 My Student Portal</h1>
+            <p>View your recycling progress and redemption codes</p>
+        </div>
+        
+        <div id="student-info">
+            <div class="login-prompt" style="text-align: center; padding: 3rem;">
+                <h2>🔐 Login Required</h2>
+                <p>Please login to view your student information</p>
+                <button onclick="window.recyclingApp.showLoginModal()" class="btn-primary">
+                    Login Now
+                </button>
+            </div>
+        </div>
+        
+        <div id="redemption-codes"></div>
+        
+        <div class="card">
+            <h2>📊 My Recycling History</h2>
+            <div id="recycling-history">
+                <p>Login to view your recycling history</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <script src="script.js"></script>
+</body>
+</html>
