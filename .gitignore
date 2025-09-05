@@ -1,0 +1,5 @@
+# Secrets - NEVER commit these!
+.env
+
+# IDE and Editor files (VSCode, PyCharm, etc.)
+.vscode/
