@@ -6,6 +6,7 @@ const studentRoutes = require('./routes/students');
 const redemptionRoutes = require('./routes/redemption');
 const monitoringRoutes = require('./routes/monitoring');
 const authRoutes = require('./routes/auth');
+const leaderboardRoutes = require('./routes/leaderboard');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,6 +20,7 @@ app.use('/api/student', studentRoutes);
 app.use('/api/redemption', redemptionRoutes);
 app.use('/api/monitoring', monitoringRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -40,3 +42,5 @@ app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📊 API available at http://localhost:${PORT}/api`);
 });
+
+

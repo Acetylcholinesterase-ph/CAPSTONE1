@@ -59,36 +59,48 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Move the leaderboard here -->
+            <div class="card">
+                <h2>🏆 Recycling Leaderboard</h2>
+                <div id="leaderboard-container">
+                    <!-- Leaderboard will be rendered here by JavaScript -->
+                </div>
+                <div id="user-rank-container" style="display: none;">
+                    <!-- User's rank will be shown here after login if not in top 10 -->
+                </div>
+            </div>
         </div>
 
         <!-- Student Portal Tab -->
         <div id="student" class="tab-content">
             <div class="student-portal">
                 <div class="card">
-                    <h1>🎓 My Student Portal</h1>
-                    <p>View your recycling progress and redemption codes</p>
-                </div>
-                
-                <div id="student-info">
-                    <div class="login-prompt">
-                        <h2>🔐 Login Required</h2>
-                        <p>Please login to view your student information</p>
-                        <button onclick="window.recyclingApp.showLoginModal()" class="btn-primary">
-                            Login Now
-                        </button>
-                    </div>
-                </div>
-                
-                <div id="redemption-codes"></div>
-                
-                <div class="card">
-                    <h2>📊 My Recycling History</h2>
-                    <div id="recycling-history">
-                        <p>Login to view your recycling history</p>
-                    </div>
-                </div>
+                <h1>🎓 My Student Portal</h1>
+                <p>View your recycling progress, redemption codes, and available rewards</p>
+            </div>
+        
+        <div id="student-info">
+            <div class="login-prompt">
+                <h2>🔐 Login Required</h2>
+                <p>Please login to view your student information and rewards</p>
+                <button onclick="window.recyclingApp.showLoginModal()" class="btn-primary">
+                    Login Now
+                </button>
             </div>
         </div>
+        
+        <div id="redemption-codes"></div>
+        <!-- Available coupons will be inserted here by JavaScript -->
+        
+        <div class="card">
+            <h2>📊 My Recycling History</h2>
+            <div id="recycling-history">
+                <p>Login to view your recycling history</p>
+            </div>
+        </div>
+    </div>
+</div>
 
         <!-- Admin Tab -->
         <div id="admin" class="tab-content">
@@ -150,7 +162,7 @@
             </div>
         </div>
     </div>
-
+    
     <!-- Login Modal -->
     <div id="login-modal" class="modal">
         <div class="modal-content">

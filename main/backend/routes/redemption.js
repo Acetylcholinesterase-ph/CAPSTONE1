@@ -72,4 +72,21 @@ function generateRedemptionCode() {
     return code;
 }
 
+// Get available coupons
+router.get('/coupons', async (req, res) => {
+    try {
+        const result = await db.query(`
+            SELECT id, coupon_name, description, points_required, coupon_value, validity_days
+            FROM coupons_catalog
+            WHERE is_active = true
+            ORDER BY points_required
+        `);
+        
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching coupons:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 module.exports = router;

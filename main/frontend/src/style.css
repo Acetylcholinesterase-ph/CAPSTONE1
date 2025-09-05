@@ -550,4 +550,399 @@ tr:hover {
     th, td {
         padding: 0.8rem;
     }
+    
+    .user-rank-card {
+        padding: 1rem;
+        max-width: 100%;
+    }
+    .user-rank-stats {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .card .leaderboard-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
+/* Leaderboard Styles */
+.leaderboard {
+    margin-top: 2rem;
+}
+
+.leaderboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.leaderboard-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    margin: 0.5rem 0;
+    background: #f7fafc;
+    border-radius: 10px;
+    border: 2px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.leaderboard-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.leaderboard-item.current-user {
+    box-shadow: 0 0 0 3px #ffd70055;
+    border-color: #ffd700;
+    background: linear-gradient(135deg, #ffd89b, #19547b);
+    color: #fff;
+}
+
+.leaderboard-rank {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #667eea;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.rank-1 { background: linear-gradient(135deg, #ffd700, #ffed4e); }
+.rank-2 { background: linear-gradient(135deg, #c0c0c0, #e0e0e0); }
+.rank-3 { background: linear-gradient(135deg, #cd7f32, #e39e54); }
+
+.leaderboard-info {
+    flex: 1;
+}
+
+.leaderboard-name {
+    font-weight: bold;
+    color: #2d3748;
+    margin-bottom: 0.2rem;
+}
+
+.leaderboard-item.current-user .leaderboard-name {
+    color: white;
+}
+
+.leaderboard-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: #718096;
+}
+
+.leaderboard-item.current-user .leaderboard-stats {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.leaderboard-bottles {
+    color: #48bb78;
+    font-weight: bold;
+}
+
+.leaderboard-item.current-user .leaderboard-bottles {
+    color: #c6f6d5;
+}
+
+.leaderboard-points {
+    color: #667eea;
+    font-weight: bold;
+}
+
+.leaderboard-item.current-user .leaderboard-points {
+    color: #bee3f8;
+}
+
+.user-rank-card {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 1.5rem 2rem;
+    border-radius: 15px;
+    margin: 0 auto 1.5rem auto;
+    text-align: center;
+    max-width: 400px;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
+    border: 2px solid #fff;
+}
+
+.user-rank-card h3 {
+    margin-bottom: 0.5rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.user-rank-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin: 0.5rem 0;
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.user-rank-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 1rem;
+    gap: 1.5rem;
+}
+
+.user-stat {
+    text-align: center;
+}
+
+.user-stat-number {
+    font-size: 1.2rem;
+    font-weight: bold;
+    display: block;
+}
+
+.user-stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+/* Coupon Redemption Styles */
+.coupon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.coupon-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border: 2px solid #e2e8f0;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.coupon-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.coupon-card.premium {
+    border-color: #ffd700;
+    background: linear-gradient(135deg, #fffaf0, #fff5e6);
+}
+
+.coupon-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px dashed #e2e8f0;
+}
+
+.coupon-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #2d3748;
+    margin: 0;
+}
+
+.coupon-points {
+    background: #48bb78;
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.coupon-body {
+    margin-bottom: 1.5rem;
+}
+
+.coupon-description {
+    color: #718096;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.coupon-value {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #667eea;
+    margin-bottom: 1rem;
+}
+
+.coupon-validity {
+    font-size: 0.9rem;
+    color: #a0aec0;
+}
+
+.coupon-actions {
+    text-align: center;
+}
+
+.redeem-btn {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #48bb78, #38a169);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.redeem-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(72, 187, 120, 0.3);
+}
+
+.redeem-btn:disabled {
+    background: #cbd5e0;
+    cursor: not-allowed;
+}
+
+.insufficient-points {
+    color: #e53e3e;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    text-align: center;
+}
+
+/* Loading states */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 4px;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.skeleton-text {
+    height: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.skeleton-button {
+    height: 3rem;
+    border-radius: 8px;
+}
+
+/* --- Leaderboard Card Enhancements --- */
+.card .leaderboard {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+}
+
+.card .leaderboard-header {
+    margin-bottom: 1rem;
+}
+
+.card .leaderboard-item {
+    margin-bottom: 0.5rem;
+}
+
+.card .leaderboard-item.current-user {
+    box-shadow: 0 0 0 3px #ffd70055;
+    border-color: #ffd700;
+    background: linear-gradient(135deg, #ffd89b, #19547b);
+    color: #fff;
+}
+
+.card .leaderboard-item.current-user .leaderboard-name,
+.card .leaderboard-item.current-user .leaderboard-stats {
+    color: #fff;
+}
+
+.card .leaderboard-item:last-child {
+    margin-bottom: 0;
+}
+
+/* --- User Rank Card Enhancements --- */
+#user-rank-container {
+    margin-top: 1.5rem;
+}
+
+.user-rank-card {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 1.5rem 2rem;
+    border-radius: 15px;
+    margin: 0 auto 1.5rem auto;
+    text-align: center;
+    max-width: 400px;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
+    border: 2px solid #fff;
+}
+
+.user-rank-card h3 {
+    margin-bottom: 0.5rem;
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.user-rank-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin: 0.5rem 0;
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.user-rank-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 1rem;
+    gap: 1.5rem;
+}
+
+.user-stat {
+    text-align: center;
+}
+
+.user-stat-number {
+    font-size: 1.2rem;
+    font-weight: bold;
+    display: block;
+}
+
+.user-stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+/* --- Responsive for Leaderboard and User Rank Card --- */
+@media (max-width: 768px) {
+    .user-rank-card {
+        padding: 1rem;
+        max-width: 100%;
+    }
+    .user-rank-stats {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .card .leaderboard-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
 }

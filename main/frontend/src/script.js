@@ -179,6 +179,12 @@ class RecyclingApp {
         document.getElementById('login-btn').style.display = 'none';
         document.getElementById('logout-btn').style.display = 'block';
         
+        // Load leaderboard on dashboard
+        if (this.currentTab === 'dashboard') {
+            this.loadLeaderboard();
+        }
+        
+        // Load student data if on student portal
         if (this.currentTab === 'student') {
             this.loadStudentData();
         }
@@ -195,9 +201,111 @@ class RecyclingApp {
                 document.getElementById('total-points').textContent = machine.total_points.toLocaleString();
                 document.getElementById('active-users').textContent = Math.floor(machine.total_bottles / 10).toLocaleString();
             }
+            
+            // Load leaderboard if user is logged in
+            if (this.currentUser) {
+                this.loadLeaderboard();
+            }
+            
         } catch (error) {
             console.error('Error loading dashboard data:', error);
         }
+    }
+
+    async loadLeaderboard() {
+        try {
+            // Always fetch top 10
+            const topResponse = await fetch(`${this.apiBaseUrl}/leaderboard/top`);
+            const topPlayers = await topResponse.json();
+
+            let userRank = null;
+            let aroundMe = [];
+
+            if (this.currentUser) {
+                // Fetch user rank and around-me only if logged in
+                const [userRankResponse, aroundMeResponse] = await Promise.all([
+                    fetch(`${this.apiBaseUrl}/leaderboard/my-rank`, {
+                        headers: { 'Authorization': `Bearer ${this.sessionToken}` }
+                    }),
+                    fetch(`${this.apiBaseUrl}/leaderboard/around-me`, {
+                        headers: { 'Authorization': `Bearer ${this.sessionToken}` }
+                    })
+                ]);
+                userRank = await userRankResponse.json();
+                aroundMe = await aroundMeResponse.json();
+            }
+
+            this.renderLeaderboard(topPlayers, userRank, aroundMe);
+
+        } catch (error) {
+            console.error('Error loading leaderboard:', error);
+            this.showMessage('Error loading leaderboard', 'error');
+        }
+    }
+
+    renderLeaderboard(topPlayers, userRank, aroundMe) {
+        const container = document.getElementById('leaderboard-container');
+        let html = `
+            <div class="leaderboard">
+                <div class="leaderboard-header">
+                    <h3>Top 10 Recyclers</h3>
+                </div>
+        `;
+
+        // Top 10 leaderboard (highlight if logged in and in top 10)
+        topPlayers.forEach((player, index) => {
+            const isCurrentUser = this.currentUser && player.student_id === this.currentUser.student_id;
+            html += `
+                <div class="leaderboard-item ${isCurrentUser ? 'current-user' : ''}">
+                    <div class="leaderboard-rank rank-${index + 1}">${index + 1}</div>
+                    <div class="leaderboard-info">
+                        <div class="leaderboard-name">${player.name}</div>
+                        <div class="leaderboard-stats">
+                            <span class="leaderboard-bottles">${player.total_bottles} bottles</span>
+                            <span class="leaderboard-points">${player.total_points} points</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `</div>`;
+
+        // Show user's own rank if logged in and not in top 10
+        const userRankContainer = document.getElementById('user-rank-container');
+        if (
+            this.currentUser &&
+            userRank &&
+            userRank.rank !== 'N/A' &&
+            userRank.rank > 10
+        ) {
+            userRankContainer.style.display = 'block';
+            userRankContainer.innerHTML = `
+                <div class="user-rank-card">
+                    <h3>Your Ranking</h3>
+                    <div class="user-rank-number">#${userRank.rank}</div>
+                    <div class="user-rank-stats">
+                        <div class="user-stat">
+                            <span class="user-stat-number">${userRank.total_bottles}</span>
+                            <span class="user-stat-label">Bottles</span>
+                        </div>
+                        <div class="user-stat">
+                            <span class="user-stat-number">${userRank.total_points}</span>
+                            <span class="user-stat-label">Points</span>
+                        </div>
+                        <div class="user-stat">
+                            <span class="user-stat-number">${userRank.rank}</span>
+                            <span class="user-stat-label">Rank</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            userRankContainer.style.display = 'none';
+            userRankContainer.innerHTML = '';
+        }
+
+        container.innerHTML = html;
     }
 
     async loadStudentData() {
@@ -217,53 +325,31 @@ class RecyclingApp {
         try {
             this.showLoading('student-info', 'Loading your data...');
             
-            const studentResponse = await fetch(`${this.apiBaseUrl}/student/rfid/${this.currentUser.rfid_id}`, {
-                headers: {
-                    'Authorization': `Bearer ${this.sessionToken}`
-                }
-            });
+            const [studentResponse, codesResponse, couponsResponse] = await Promise.all([
+                fetch(`${this.apiBaseUrl}/student/rfid/${this.currentUser.rfid_id}`, {
+                    headers: { 'Authorization': `Bearer ${this.sessionToken}` }
+                }),
+                fetch(`${this.apiBaseUrl}/student/${this.currentUser.rfid_id}/codes`, {
+                    headers: { 'Authorization': `Bearer ${this.sessionToken}` }
+                }),
+                fetch(`${this.apiBaseUrl}/redemption/coupons`)
+            ]);
             
-            if (!studentResponse.ok) {
-                throw new Error('Failed to fetch student data');
-            }
+            if (!studentResponse.ok) throw new Error('Failed to fetch student data');
             
             const studentData = await studentResponse.json();
-            
-            const codesResponse = await fetch(`${this.apiBaseUrl}/student/${this.currentUser.rfid_id}/codes`, {
-                headers: {
-                    'Authorization': `Bearer ${this.sessionToken}`
-                }
-            });
-            
             const codesData = await codesResponse.ok ? await codesResponse.json() : [];
+            const couponsData = await couponsResponse.ok ? await couponsResponse.json() : [];
             
             this.renderStudentInfo(studentData);
             this.renderRedemptionCodes(codesData);
+            this.renderAvailableCoupons(couponsData, studentData.total_points);
             
         } catch (error) {
             console.error('Error loading student data:', error);
             this.showMessage('Error loading your data. Please try again.', 'error');
             document.getElementById('student-info').innerHTML = '';
             document.getElementById('redemption-codes').innerHTML = '';
-        }
-    }
-
-    async loadAdminData() {
-        try {
-            const [statsResponse, activitiesResponse] = await Promise.all([
-                fetch(`${this.apiBaseUrl}/monitoring/machine-stats`),
-                fetch(`${this.apiBaseUrl}/monitoring/suspicious-activities`)
-            ]);
-            
-            const statsData = await statsResponse.json();
-            const activitiesData = await activitiesResponse.json();
-            
-            this.renderMachineStats(statsData);
-            this.renderSuspiciousActivities(activitiesData);
-            
-        } catch (error) {
-            console.error('Error loading admin data:', error);
-            this.showMessage('Error loading admin data', 'error');
         }
     }
 
@@ -319,6 +405,60 @@ class RecyclingApp {
                 `).join('')}
             </div>
         `;
+    }
+
+    async renderAvailableCoupons(coupons, userPoints) {
+        const container = document.createElement('div');
+        container.innerHTML = `
+            <div class="card">
+                <h2>🎁 Available Rewards</h2>
+                <p>Redeem your points for exciting rewards!</p>
+                <div class="coupon-grid" id="available-coupons">
+                    ${coupons.map(coupon => `
+                        <div class="coupon-card ${coupon.points_required > 100 ? 'premium' : ''}">
+                            <div class="coupon-header">
+                                <h3 class="coupon-title">${coupon.coupon_name}</h3>
+                                <span class="coupon-points">${coupon.points_required} pts</span>
+                            </div>
+                            <div class="coupon-body">
+                                <p class="coupon-description">${coupon.description}</p>
+                                <p class="coupon-value">🎯 ${coupon.coupon_value}</p>
+                                <p class="coupon-validity">Valid for ${coupon.validity_days} days</p>
+                            </div>
+                            <div class="coupon-actions">
+                                <button class="redeem-btn" onclick="redeemCoupon(${coupon.id}, ${coupon.points_required}, '${coupon.coupon_name}')" 
+                                    ${userPoints < coupon.points_required ? 'disabled' : ''}>
+                                    🎫 Redeem Now
+                                </button>
+                                ${userPoints < coupon.points_required ? 
+                                    `<p class="insufficient-points">Need ${coupon.points_required - userPoints} more points</p>` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('redemption-codes').appendChild(container);
+    }
+
+    async loadAdminData() {
+        try {
+            const [statsResponse, activitiesResponse] = await Promise.all([
+                fetch(`${this.apiBaseUrl}/monitoring/machine-stats`),
+                fetch(`${this.apiBaseUrl}/monitoring/suspicious-activities`)
+            ]);
+            
+            const statsData = await statsResponse.json();
+            const activitiesData = await activitiesResponse.json();
+            
+            this.renderMachineStats(statsData);
+            this.renderSuspiciousActivities(activitiesData);
+            
+        } catch (error) {
+            console.error('Error loading admin data:', error);
+            this.showMessage('Error loading admin data', 'error');
+        }
     }
 
     renderMachineStats(stats) {
@@ -465,6 +605,49 @@ function copyToClipboard(text) {
     });
 }
 
+async function redeemCoupon(couponId, pointsRequired, couponName) {
+    if (!window.recyclingApp.currentUser) {
+        window.recyclingApp.showMessage('Please login to redeem coupons', 'error');
+        return;
+    }
+
+    if (!confirm(`Redeem ${pointsRequired} points for ${couponName}?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${window.recyclingApp.apiBaseUrl}/redemption/redeem`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${window.recyclingApp.sessionToken}`
+            },
+            body: JSON.stringify({
+                rfid: window.recyclingApp.currentUser.rfid_id,
+                coupon_id: couponId
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            window.recyclingApp.showMessage(`Success! Your redemption code: ${data.code}`, 'success');
+            // Reload student data to refresh points and codes
+            window.recyclingApp.loadStudentData();
+            // Reload leaderboard
+            if (window.recyclingApp.currentTab === 'dashboard') {
+                window.recyclingApp.loadLeaderboard();
+            }
+        } else {
+            window.recyclingApp.showMessage(data.error, 'error');
+        }
+
+    } catch (error) {
+        console.error('Error redeeming coupon:', error);
+        window.recyclingApp.showMessage('Error redeeming coupon', 'error');
+    }
+}
+
 function logout() {
     if (window.recyclingApp) {
         window.recyclingApp.logout();
@@ -514,7 +697,69 @@ document.addEventListener('DOMContentLoaded', function() {
                 bottles_inserted: 5,
                 status: 'suspicious',
                 suspicion_reason: 'Rapid insertions detected'
-            }]
+            }],
+            
+            '/api/leaderboard/top': [
+                { name: 'Eco Warrior', student_id: 'STU2024005', total_bottles: 245, total_points: 2450 },
+                { name: 'Green Champion', student_id: 'STU2024002', total_bottles: 198, total_points: 1980 },
+                { name: 'Recycle Master', student_id: 'STU2024007', total_bottles: 176, total_points: 1760 },
+                { name: 'John Doe', student_id: 'STU2024001', total_bottles: 150, total_points: 1500 },
+                { name: 'Eco Friend', student_id: 'STU2024009', total_bottles: 132, total_points: 1320 },
+                { name: 'Planet Saver', student_id: 'STU2024003', total_bottles: 121, total_points: 1210 },
+                { name: 'Green Hero', student_id: 'STU2024008', total_bottles: 98, total_points: 980 },
+                { name: 'Eco Advocate', student_id: 'STU2024004', total_bottles: 87, total_points: 870 },
+                { name: 'Sustainability Guru', student_id: 'STU2024006', total_bottles: 76, total_points: 760 },
+                { name: 'Environment Ally', student_id: 'STU2024010', total_bottles: 65, total_points: 650 }
+            ],
+            
+            '/api/leaderboard/my-rank': {
+                rank: 4,
+                total_bottles: 150,
+                total_points: 1500
+            },
+            
+            '/api/leaderboard/around-me': [
+                { position: 2, name: 'Green Champion', student_id: 'STU2024002', total_bottles: 198, total_points: 1980 },
+                { position: 3, name: 'Recycle Master', student_id: 'STU2024007', total_bottles: 176, total_points: 1760 },
+                { position: 4, name: 'John Doe', student_id: 'STU2024001', total_bottles: 150, total_points: 1500 },
+                { position: 5, name: 'Eco Friend', student_id: 'STU2024009', total_bottles: 132, total_points: 1320 },
+                { position: 6, name: 'Planet Saver', student_id: 'STU2024003', total_bottles: 121, total_points: 1210 }
+            ],
+            
+            '/api/redemption/coupons': [
+                {
+                    id: 1,
+                    coupon_name: "Coffee Discount",
+                    description: "Get 20% off on any coffee at campus cafe",
+                    points_required: 50,
+                    coupon_value: "20% OFF",
+                    validity_days: 30
+                },
+                {
+                    id: 2,
+                    coupon_name: "Free Snack",
+                    description: "Enjoy a free snack from the vending machine",
+                    points_required: 100,
+                    coupon_value: "FREE Snack",
+                    validity_days: 30
+                },
+                {
+                    id: 3,
+                    coupon_name: "Canteen Discount",
+                    description: "15% discount on any meal at the campus canteen",
+                    points_required: 150,
+                    coupon_value: "15% OFF",
+                    validity_days: 30
+                },
+                {
+                    id: 4,
+                    coupon_name: "Stationery Set",
+                    description: "Eco-friendly stationery set",
+                    points_required: 200,
+                    coupon_value: "FREE Set",
+                    validity_days: 60
+                }
+            ]
         };
         
         const originalFetch = window.fetch;
@@ -530,5 +775,3 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     };
 });
-// Uncomment to simulate API responses for demo purposes
-// window.simulateAPI();
