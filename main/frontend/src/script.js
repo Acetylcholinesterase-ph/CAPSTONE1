@@ -4,6 +4,7 @@ class RecyclingApp {
         this.currentUser = null;
         this.sessionToken = null;
         this.apiBaseUrl = 'http://localhost:3000/api';
+        this.pendingStudentAccess = false;
         
         this.init();
     }
@@ -15,16 +16,16 @@ class RecyclingApp {
     }
 
     setupEventListeners() {
-        // Tab navigation with login check
+        // Tab navigation
         document.querySelectorAll('.nav-link').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const tab = e.target.getAttribute('data-tab');
                 
-                // Check if student portal requires login
                 if (tab === 'student' && !this.currentUser) {
                     this.showLoginModal();
                     this.showMessage('Please login to access student portal', 'info');
+                    this.pendingStudentAccess = true;
                     return;
                 }
                 
@@ -52,30 +53,27 @@ class RecyclingApp {
     }
 
     setActiveTab(tabName) {
-        // Check if student portal requires login
         if (tabName === 'student' && !this.currentUser) {
             this.showLoginModal();
             this.showMessage('Please login to access student portal', 'info');
+            this.pendingStudentAccess = true;
             return;
         }
         
         this.currentTab = tabName;
+        this.pendingStudentAccess = false;
         
-        // Hide all tabs
         document.querySelectorAll('.tab-content').forEach(tab => {
             tab.classList.remove('active');
         });
         
-        // Show active tab
         document.getElementById(tabName).classList.add('active');
         
-        // Update active nav link
         document.querySelectorAll('.nav-link').forEach(link => {
             link.classList.remove('active');
         });
         document.querySelector(`.nav-link[data-tab="${tabName}"]`).classList.add('active');
         
-        // Load data for the active tab
         if (tabName === 'dashboard') {
             this.loadDashboardData();
         } else if (tabName === 'student') {
@@ -119,7 +117,6 @@ class RecyclingApp {
                 this.sessionToken = data.session_token;
                 this.currentUser = data.user;
                 
-                // Store session in localStorage
                 localStorage.setItem('sessionToken', this.sessionToken);
                 localStorage.setItem('userData', JSON.stringify(this.currentUser));
                 
@@ -127,10 +124,8 @@ class RecyclingApp {
                 this.hideLoginModal();
                 this.showMessage('Login successful!', 'success');
                 
-                // If user was trying to access student portal, switch to it
-                if (this.currentTab === 'student' || this.pendingStudentAccess) {
+                if (this.pendingStudentAccess) {
                     this.setActiveTab('student');
-                    this.pendingStudentAccess = false;
                 }
                 
             } else {
@@ -148,18 +143,80 @@ class RecyclingApp {
         }
     }
 
-    // Add this method to handle student data loading
+    async checkExistingSession() {
+        const savedToken = localStorage.getItem('sessionToken');
+        const savedUser = localStorage.getItem('userData');
+
+        if (savedToken && savedUser) {
+            try {
+                const response = await fetch(`${this.apiBaseUrl}/auth/verify-session`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ session_token: savedToken })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    this.sessionToken = savedToken;
+                    this.currentUser = JSON.parse(savedUser);
+                    this.updateUIAfterLogin();
+                } else {
+                    this.clearSession();
+                }
+
+            } catch (error) {
+                console.error('Session verification error:', error);
+                this.clearSession();
+            }
+        }
+    }
+
+    updateUIAfterLogin() {
+        document.getElementById('user-greeting').textContent = `Welcome, ${this.currentUser.name}`;
+        document.getElementById('login-btn').style.display = 'none';
+        document.getElementById('logout-btn').style.display = 'block';
+        
+        if (this.currentTab === 'student') {
+            this.loadStudentData();
+        }
+    }
+
+    async loadDashboardData() {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/monitoring/machine-stats`);
+            const data = await response.json();
+            
+            if (data.length > 0) {
+                const machine = data[0];
+                document.getElementById('total-bottles').textContent = machine.total_bottles.toLocaleString();
+                document.getElementById('total-points').textContent = machine.total_points.toLocaleString();
+                document.getElementById('active-users').textContent = Math.floor(machine.total_bottles / 10).toLocaleString();
+            }
+        } catch (error) {
+            console.error('Error loading dashboard data:', error);
+        }
+    }
+
     async loadStudentData() {
         if (!this.currentUser) {
-            this.showLoginModal();
-            this.showMessage('Please login to view your data', 'info');
+            document.getElementById('student-info').innerHTML = `
+                <div class="login-prompt">
+                    <h2>🔐 Login Required</h2>
+                    <p>Please login to view your student information</p>
+                    <button onclick="window.recyclingApp.showLoginModal()" class="btn-primary">
+                        Login Now
+                    </button>
+                </div>
+            `;
             return;
         }
 
         try {
             this.showLoading('student-info', 'Loading your data...');
             
-            // Fetch student details
             const studentResponse = await fetch(`${this.apiBaseUrl}/student/rfid/${this.currentUser.rfid_id}`, {
                 headers: {
                     'Authorization': `Bearer ${this.sessionToken}`
@@ -172,7 +229,6 @@ class RecyclingApp {
             
             const studentData = await studentResponse.json();
             
-            // Fetch redemption codes
             const codesResponse = await fetch(`${this.apiBaseUrl}/student/${this.currentUser.rfid_id}/codes`, {
                 headers: {
                     'Authorization': `Bearer ${this.sessionToken}`
@@ -187,24 +243,30 @@ class RecyclingApp {
         } catch (error) {
             console.error('Error loading student data:', error);
             this.showMessage('Error loading your data. Please try again.', 'error');
-            
-            // Clear loading state
             document.getElementById('student-info').innerHTML = '';
             document.getElementById('redemption-codes').innerHTML = '';
         }
     }
 
-    showLoading(containerId, message = 'Loading...') {
-        const container = document.getElementById(containerId);
-        container.innerHTML = `
-            <div class="loading-container">
-                <div class="loading-spinner"></div>
-                <p>${message}</p>
-            </div>
-        `;
+    async loadAdminData() {
+        try {
+            const [statsResponse, activitiesResponse] = await Promise.all([
+                fetch(`${this.apiBaseUrl}/monitoring/machine-stats`),
+                fetch(`${this.apiBaseUrl}/monitoring/suspicious-activities`)
+            ]);
+            
+            const statsData = await statsResponse.json();
+            const activitiesData = await activitiesResponse.json();
+            
+            this.renderMachineStats(statsData);
+            this.renderSuspiciousActivities(activitiesData);
+            
+        } catch (error) {
+            console.error('Error loading admin data:', error);
+            this.showMessage('Error loading admin data', 'error');
+        }
     }
 
-    // Update the renderStudentInfo method
     renderStudentInfo(studentData) {
         const studentInfoDiv = document.getElementById('student-info');
         studentInfoDiv.innerHTML = `
@@ -221,7 +283,6 @@ class RecyclingApp {
         `;
     }
 
-    // Update the renderRedemptionCodes method
     renderRedemptionCodes(codes) {
         const codesDiv = document.getElementById('redemption-codes');
         
@@ -260,6 +321,49 @@ class RecyclingApp {
         `;
     }
 
+    renderMachineStats(stats) {
+        const statsDiv = document.getElementById('machine-stats');
+        
+        statsDiv.innerHTML = stats.map(machine => `
+            <div class="stat-card">
+                <h3>${machine.machine_id}</h3>
+                <p>${machine.total_bottles.toLocaleString()}</p>
+                <small>Bottles Collected</small>
+            </div>
+            <div class="stat-card">
+                <h3>${machine.total_points.toLocaleString()}</h3>
+                <small>Points Distributed</small>
+            </div>
+            <div class="stat-card">
+                <h3>${machine.suspicious_count}</h3>
+                <small>Suspicious Activities</small>
+            </div>
+        `).join('');
+    }
+
+    renderSuspiciousActivities(activities) {
+        const tbody = document.getElementById('suspicious-activities-body');
+        
+        if (activities.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="no-data">No suspicious activities found</td>
+                </tr>
+            `;
+            return;
+        }
+        
+        tbody.innerHTML = activities.map(activity => `
+            <tr>
+                <td><strong>${activity.name}</strong><br><small>${activity.student_id}</small></td>
+                <td>${new Date(activity.insertion_time).toLocaleString()}</td>
+                <td>${activity.bottles_inserted}</td>
+                <td><span class="status-badge">${activity.status}</span></td>
+                <td>${activity.suspicion_reason || 'N/A'}</td>
+            </tr>
+        `).join('');
+    }
+
     getCouponValue(couponName) {
         const values = {
             'Coffee Discount': '20% OFF Coffee',
@@ -269,9 +373,88 @@ class RecyclingApp {
         };
         return values[couponName] || 'Reward';
     }
+
+    showLoginModal() {
+        document.getElementById('login-modal').style.display = 'block';
+    }
+
+    hideLoginModal() {
+        document.getElementById('login-modal').style.display = 'none';
+        document.getElementById('login-message').innerHTML = '';
+        document.getElementById('login-form').reset();
+    }
+
+    showLoading(containerId, message = 'Loading...') {
+        const container = document.getElementById(containerId);
+        container.innerHTML = `
+            <div class="loading-container">
+                <div class="loading-spinner"></div>
+                <p>${message}</p>
+            </div>
+        `;
+    }
+
+    showMessage(message, type = 'success', element = null) {
+        const targetElement = element || document.getElementById(this.currentTab);
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}`;
+        messageDiv.textContent = message;
+        
+        if (element) {
+            element.innerHTML = '';
+            element.appendChild(messageDiv);
+        } else {
+            targetElement.insertBefore(messageDiv, targetElement.firstChild);
+        }
+        
+        setTimeout(() => {
+            messageDiv.remove();
+        }, 5000);
+    }
+
+    async getClientIP() {
+        try {
+            const response = await fetch('https://api.ipify.org?format=json');
+            const data = await response.json();
+            return data.ip;
+        } catch (error) {
+            return 'unknown';
+        }
+    }
+
+    async logout() {
+        try {
+            await fetch(`${this.apiBaseUrl}/auth/logout`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ session_token: this.sessionToken })
+            });
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            this.clearSession();
+        }
+    }
+
+    clearSession() {
+        this.sessionToken = null;
+        this.currentUser = null;
+        localStorage.removeItem('sessionToken');
+        localStorage.removeItem('userData');
+        
+        document.getElementById('user-greeting').textContent = 'Welcome, Guest';
+        document.getElementById('login-btn').style.display = 'block';
+        document.getElementById('logout-btn').style.display = 'none';
+        
+        if (this.currentTab === 'student') {
+            this.loadStudentData();
+        }
+    }
 }
 
-// Add copy to clipboard function
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
         if (window.recyclingApp) {
@@ -282,7 +465,6 @@ function copyToClipboard(text) {
     });
 }
 
-// Make logout function globally available
 function logout() {
     if (window.recyclingApp) {
         window.recyclingApp.logout();
@@ -293,4 +475,60 @@ function logout() {
 document.addEventListener('DOMContentLoaded', function() {
     const app = new RecyclingApp();
     window.recyclingApp = app;
+    
+    // Simulate API for demo (remove in production)
+    window.simulateAPI = function() {
+        const mockAPIs = {
+            '/api/monitoring/machine-stats': [{
+                machine_id: 'machine_001',
+                total_operations: 150,
+                total_bottles: 1250,
+                total_points: 12500,
+                suspicious_count: 3,
+                last_activity: new Date().toISOString()
+            }],
+            
+            '/api/student/id/STU2024001': {
+                rfid_id: 'A1B2C3D4E5',
+                name: 'John Doe',
+                student_id: 'STU2024001',
+                email: 'john.doe@university.edu',
+                total_points: 150,
+                total_bottles: 15,
+                created_at: new Date().toISOString(),
+                last_login: new Date().toISOString()
+            },
+            
+            '/api/student/A1B2C3D4E5/codes': [{
+                redemption_code: 'COFFEE123',
+                coupon_name: 'Coffee Discount',
+                status: 'active',
+                expiry_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+            }],
+            
+            '/api/monitoring/suspicious-activities': [{
+                id: 1,
+                name: 'John Doe',
+                student_id: 'STU2024001',
+                insertion_time: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+                bottles_inserted: 5,
+                status: 'suspicious',
+                suspicion_reason: 'Rapid insertions detected'
+            }]
+        };
+        
+        const originalFetch = window.fetch;
+        window.fetch = async function(url) {
+            if (mockAPIs[url]) {
+                return {
+                    ok: true,
+                    json: async () => mockAPIs[url],
+                    text: async () => JSON.stringify(mockAPIs[url])
+                };
+            }
+            return originalFetch.apply(this, arguments);
+        };
+    };
 });
+// Uncomment to simulate API responses for demo purposes
+// window.simulateAPI();

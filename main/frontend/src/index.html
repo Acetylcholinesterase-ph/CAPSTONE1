@@ -9,12 +9,21 @@
 <body>
     <div class="container">
         <nav class="navbar">
-            <div class="nav-brand">♻️ Eco Recycle</div>
+            <div class="nav-brand">
+                <span class="logo">♻️</span>
+                <span class="brand-text">Eco Recycle</span>
+            </div>
             <ul class="nav-links">
                 <li><a href="#" class="nav-link active" data-tab="dashboard">Dashboard</a></li>
                 <li><a href="#" class="nav-link" data-tab="student">Student Portal</a></li>
-                <li><a href="#" class="nav-link" data-tab="admin">Admin Monitoring</a></li>
+                <li><a href="#" class="nav-link" data-tab="admin">Admin</a></li>
+                <li><a href="#" class="nav-link" data-tab="about">About</a></li>
             </ul>
+            <div class="user-menu">
+                <span id="user-greeting">Welcome, Guest</span>
+                <button id="login-btn" class="btn-secondary" onclick="window.recyclingApp.showLoginModal()">Login</button>
+                <button id="logout-btn" class="btn-secondary" onclick="logout()" style="display: none;">Logout</button>
+            </div>
         </nav>
 
         <!-- Dashboard Tab -->
@@ -54,29 +63,46 @@
 
         <!-- Student Portal Tab -->
         <div id="student" class="tab-content">
-            <div class="card">
-                <h1>🎓 Student Redemption Portal</h1>
-                
-                <div class="search-box">
-                    <input type="text" id="studentId" placeholder="Enter Student ID" class="search-input">
-                    <button onclick="fetchStudentData()" class="search-btn">Search</button>
+            <div class="student-portal">
+                <div class="card">
+                    <h1>🎓 My Student Portal</h1>
+                    <p>View your recycling progress and redemption codes</p>
                 </div>
                 
-                <div id="student-info"></div>
+                <div id="student-info">
+                    <div class="login-prompt">
+                        <h2>🔐 Login Required</h2>
+                        <p>Please login to view your student information</p>
+                        <button onclick="window.recyclingApp.showLoginModal()" class="btn-primary">
+                            Login Now
+                        </button>
+                    </div>
+                </div>
+                
                 <div id="redemption-codes"></div>
+                
+                <div class="card">
+                    <h2>📊 My Recycling History</h2>
+                    <div id="recycling-history">
+                        <p>Login to view your recycling history</p>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Admin Monitoring Tab -->
+        <!-- Admin Tab -->
         <div id="admin" class="tab-content">
             <div class="card">
-                <h1>👨‍💼 Admin Monitoring Dashboard</h1>
-                
-                <div class="stats-grid" id="machine-stats">
-                    <!-- Machine stats will be populated here -->
-                </div>
-                
-                <h2 class="section-title">🚨 Suspicious Activities</h2>
+                <h1>👨‍💼 Admin Dashboard</h1>
+                <p>System monitoring and management</p>
+            </div>
+            
+            <div class="stats-grid" id="machine-stats">
+                <!-- Machine stats will be populated here -->
+            </div>
+            
+            <div class="card">
+                <h2>🚨 Suspicious Activities</h2>
                 <div class="table-container">
                     <table>
                         <thead>
@@ -90,70 +116,64 @@
                         </thead>
                         <tbody id="suspicious-activities-body">
                             <tr>
-                                <td colspan="5" class="no-data">No suspicious activities found</td>
+                                <td colspan="5" class="no-data">No suspicious activities</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
-    </div>
-<!-- Add this before closing body tag -->
-<div id="login-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>🔐 Student Login</h2>
-            <span class="close">&times;</span>
-        </div>
-        <div class="modal-body">
-            <form id="login-form">
-                <div class="form-group">
-                    <label for="login-username">Username:</label>
-                    <input type="text" id="login-username" required>
+
+        <!-- About Tab -->
+        <div id="about" class="tab-content">
+            <div class="card">
+                <h1>ℹ️ About Eco Recycle</h1>
+                <p>Sustainable recycling solution for educational institutions</p>
+                
+                <div class="about-content">
+                    <h2>How it works</h2>
+                    <ol>
+                        <li>Students register their RFID card at the machine</li>
+                        <li>Insert plastic bottles to earn points</li>
+                        <li>Redeem points for rewards and coupons</li>
+                        <li>Track progress through the online portal</li>
+                    </ol>
+                    
+                    <h2>Benefits</h2>
+                    <ul>
+                        <li>♻️ Promotes environmental awareness</li>
+                        <li>🎁 Incentivizes recycling through rewards</li>
+                        <li>📊 Tracks recycling impact in real-time</li>
+                        <li>🔒 Secure PIN-based authentication</li>
+                    </ul>
                 </div>
-                <div class="form-group">
-                    <label for="login-pin">PIN Code:</label>
-                    <input type="password" id="login-pin" maxlength="4" required>
-                </div>
-                <button type="submit" class="btn-primary">Login</button>
-            </form>
-            <div id="login-message"></div>
-        </div>
-    </div>
-</div>
-<!-- Add user menu to navbar -->
-<div class="user-menu" style="display: none;">
-    <span id="user-greeting"></span>
-        <button onclick="logout()" class="btn-secondary">Logout</button>
-</div>
-<!-- Student Portal Tab -->
-<div id="student" class="tab-content">
-    <div class="student-portal">
-        <div class="card">
-            <h1>🎓 My Student Portal</h1>
-            <p>View your recycling progress and redemption codes</p>
-        </div>
-        
-        <div id="student-info">
-            <div class="login-prompt" style="text-align: center; padding: 3rem;">
-                <h2>🔐 Login Required</h2>
-                <p>Please login to view your student information</p>
-                <button onclick="window.recyclingApp.showLoginModal()" class="btn-primary">
-                    Login Now
-                </button>
-            </div>
-        </div>
-        
-        <div id="redemption-codes"></div>
-        
-        <div class="card">
-            <h2>📊 My Recycling History</h2>
-            <div id="recycling-history">
-                <p>Login to view your recycling history</p>
             </div>
         </div>
     </div>
-</div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔐 Student Login</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-username">Username:</label>
+                        <input type="text" id="login-username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-pin">PIN Code (4 digits):</label>
+                        <input type="password" id="login-pin" maxlength="4" required pattern="[0-9]{4}">
+                    </div>
+                    <button type="submit" class="btn-primary">Login</button>
+                </form>
+                <div id="login-message"></div>
+            </div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
